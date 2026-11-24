@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -131,9 +132,9 @@ fun AppScreen() {
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Button(onClick = { send("left") }) { Text("LEFT") }
-                Spacer(Modifier.padding(8.dp))
+                Spacer(Modifier.width(8.dp))
                 Button(onClick = { send("ok") }) { Text("OK") }
-                Spacer(Modifier.padding(8.dp))
+                Spacer(Modifier.width(8.dp))
                 Button(onClick = { send("right") }) { Text("RIGHT") }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
@@ -141,7 +142,7 @@ fun AppScreen() {
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Button(onClick = { send("back") }) { Text("BACK") }
-                Spacer(Modifier.padding(8.dp))
+                Spacer(Modifier.width(8.dp))
                 Button(onClick = { send("ok", "long") }) { Text("OK LONG") }
             }
 

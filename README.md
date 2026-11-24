@@ -28,8 +28,10 @@ qismlar (holat mashinasi, scene/view tizimi, input, kichik displey, app ro'yxati
 make -C firmware/host test
 cd server && go test ./... && cd ..
 
-# 2) Go bridge (qurilmasiz ham ishga tushadi, /health tekshirish uchun)
-cd server && go run ./cmd/flite-bridge --device http://192.168.4.1 --listen :8080
+# 2) Go bridge (qurilmasiz sinash uchun soxta qurilma + bridge)
+cd server
+go run ./cmd/fake-device --listen :9090 &     # apparatsiz demo
+go run ./cmd/flite-bridge --device http://localhost:9090 --listen :8080
 
 # 3) ESP32 firmware (ESP-IDF >= 5.2 kerak)
 cd firmware

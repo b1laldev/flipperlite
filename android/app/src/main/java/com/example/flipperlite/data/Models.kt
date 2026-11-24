@@ -14,16 +14,16 @@ data class DeviceStatus(
 ) {
     companion object {
         fun fromJson(json: String): DeviceStatus {
-            val object = JSONObject(json)
+            val jsonObject = JSONObject(json)
             return DeviceStatus(
-                name = object.optString("name", "unknown"),
-                version = object.optString("version", "-"),
-                app = object.optString("app", "none"),
-                mode = object.optString("mode", "-"),
-                ssid = object.optString("ssid", "-"),
-                ip = object.optString("ip", "-"),
-                uptimeS = object.optLong("uptime_s"),
-                freeHeap = object.optLong("free_heap"),
+                name = jsonObject.optString("name", "unknown"),
+                version = jsonObject.optString("version", "-"),
+                app = jsonObject.optString("app", "none"),
+                mode = jsonObject.optString("mode", "-"),
+                ssid = jsonObject.optString("ssid", "-"),
+                ip = jsonObject.optString("ip", "-"),
+                uptimeS = jsonObject.optLong("uptime_s"),
+                freeHeap = jsonObject.optLong("free_heap"),
             )
         }
     }

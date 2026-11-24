@@ -62,6 +62,11 @@ go run ./cmd/flite-bridge --device http://192.168.4.1 --listen :8080
 
 `curl http://localhost:8080/health` → `{"status":"ok",...}`.
 
+**Apparatsiz to'liq sinov:** avval `go run ./cmd/fake-device --listen :9090` ni ishga tushiring,
+keyin bridge'ni `--device http://localhost:9090` bilan oching. Soxta qurilma xuddi ESP32 kabi
+`/api/status`, `/api/apps`, `/api/display`, `/api/input`, `/api/events` javob beradi; Android
+ilovasidagi D-pad va app tugmalari shu bilan ishlaydi.
+
 ## 4) Android
 
 ```bash

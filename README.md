@@ -1,5 +1,7 @@
 # FlipperLite — Flipper Zero g'oyasining arzon ESP32 porti
 
+**Public repo:** https://github.com/b1laldev/flipperlite
+
 Flipper Zero firmwareining **arxitekturasidan ilhomlanib**, oddiy va arzon ESP32-S3 / ESP32-C3
 chiplariga mo'ljallangan yengil qurilma platformasi. To'liq firmware kloni emas: faqat kerakli
 qismlar (holat mashinasi, scene/view tizimi, input, kichik displey, app ro'yxati) qaytadan yozilgan.
@@ -21,6 +23,7 @@ qismlar (holat mashinasi, scene/view tizimi, input, kichik displey, app ro'yxati
 | `server/internal/api/web/` | Veb boshqaruv paneli (HTML/CSS/JS, Go `embed` ichida) |
 | `android/` | Kotlin + Compose ilova: status, displey, app ishga tushirish, D-pad, voqealar |
 | `docs/` | Arxitektura, protokol, tashqi API, sirlar, yig'ish, port xaritasi |
+| `hardware/PROFILE.md` | Prosessor/WiFi/boot/displey pinlari — kelguchi ma'lumotlar uchun shablon |
 
 ## Tez boshlash
 

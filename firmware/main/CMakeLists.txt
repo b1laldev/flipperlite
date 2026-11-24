@@ -1,0 +1,32 @@
+idf_component_register(
+    SRCS
+        "app_main.c"
+        "flite/flite_event_bus.c"
+        "hw/flite_display_esp.c"
+        "hw/flite_input_esp.c"
+        "net/flite_wifi.c"
+        "net/flite_http.c"
+        "flite/flite_protocol.c"
+        "flite/flite_canvas.c"
+        "flite/flite_scene.c"
+        "flite/flite_manager.c"
+        "apps/flite_apps.c"
+    INCLUDE_DIRS
+        "."
+        "flite"
+        "apps"
+        "hw"
+        "net"
+    REQUIRES
+        driver
+        esp_timer
+        esp_system
+        esp_event
+        esp_netif
+        esp_wifi
+        esp_http_server
+        nvs_flash
+        freertos
+        lwip
+        log
+)

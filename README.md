@@ -1,74 +1,66 @@
-# WiFi Badge (simulyator)
+# FlipperLite — Flipper Zero g'oyasining arzon ESP32 porti
 
-Qiziqish uchun yasalgan kichik "hardware" prototipi: WPS tugmasi bosilganda
-tarmoq ma'lumotlarini displeyga chiqaradigan qurilma **mantig'i**.
+Flipper Zero firmwareining **arxitekturasidan ilhomlanib**, oddiy va arzon ESP32-S3 / ESP32-C3
+chiplariga mo'ljallangan yengil qurilma platformasi. To'liq firmware kloni emas: faqat kerakli
+qismlar (holat mashinasi, scene/view tizimi, input, kichik displey, app ro'yxati) qaytadan yozilgan.
 
-> **E'tibor:** container ichida haqiqiy WiFi adapteri yo'q.(Ushbu loyiha hech qanday haqiqiy tarmoqni skanerlamaydi, ochmaydi yoki buzmaydi.
-> `config.json` dagi ma'lumotlar to'liq soxta (`LAB-WIFI-TEST`).
-> Faqat o'zingizga tegishli qurilmalar bilan tajriba qiling.
-
-## Ishga tushirish
-
-Qo'shimcha paketlar kerak emas, faqat Python 3.9+:
-
-```bash
-# terminal simulyatori
-python3 sim.py
-
-# veb-dashboard (faqat localhost): http://127.0.0.1:8765
-python3 web.py
-
-# testlar
-python3 -m unittest discover -s tests -v
-```
-
-`sim.py` da tugmalar: `1` — WPS, `2` — Reset, `r` — bir sikl oldinga,
-`0` — chiqish. WPS bosilgandan keyin qurilma bir necha bosqichdan o'tib,
-ekranda SSID, parol va PIN ko'rsatadi. Agar WPS oynasi (6 s) o'tib ketsa,
-ekranda xato chiqadi.
+> **Xavfsizlik:** loyiha faqat **o'zingizga tegishli** tarmoq va qurilmalar uchun. Hech qanday
+> tarmoqni skanerlash, buzish yoki begona ma'lumot olish vositasi yo'q. Badge demosidagi
+> SSID/PIN faqat namuna qiymatlar.
 
 ## Tuzilma
 
-| Fayl | Vazifasi |
+| Papka | Vazifasi |
 | --- | --- |
-| `device/router.py` | Soxta router: WPS oynasi, vaqt chegarasi, ma'lumot qaytarish |
-| `device/device.py` | Holat mashinasi: `BOOT → IDLE → WPS_WAIT → EXCHANGING → SHOWING / ERROR` |
-| `device/display.py` | Displey buferi va terminalda chizish |
-| `config.json` | Soxta tarmoq ma'lumotlari |
-| `sim.py` | Terminal orqali boshqarish |
-| `web.py` | Tugmali qurilma maketi (stdlib HTTP server) |
-| `tests/` | Holat mashinasi testlari |
+| `firmware/main/flite/` | Furi-uslubidagi yadro: event bus, canvas, scene, manager, JSON protokol |
+| `firmware/main/apps/` | Menu, Badge, WiFi, Settings ilovalari |
+| `firmware/main/hw/` | SSD1306 (I2C) displey va 6 tugma (short/long/repeat) |
+| `firmware/main/net/` | SoftAP/STA WiFi, REST + SSE API (port 80) |
+| `firmware/host/` | Apparatsiz C testlari (`make -C firmware/host test`) |
+| `server/` | Go bridge: qurilma API'sini telefon uchun REST/SSE ga aylantiradi |
+| `android/` | Kotlin + Compose ilova: status, app ishga tushirish, D-pad, voqealar oqimi |
+| `docs/` | Arxitektura, protokol, yig'ish va Flipper'dan port qilish xaritasi |
 
-## MF680 (haqiqiy qurilma) — veb/API darajasida tekshirish
-
-`tools/` papkasi firmwarega tegmaydi: faqat HTTP so'rovlari yuboradi.
+## Tez boshlash
 
 ```bash
-python3 tools/recon.py --base http://192.168.100.1 --user admin --pass admin
-python3 tools/sms_client.py endpoints          # topilgan nomzodlar
-python3 tools/sms_client.py unhide             # CSS bilan yashirilgan bo'limlarni ochish
-python3 tools/sms_client.py list --url '/goform/...'   # aniq endpoint bilan
+# 1) Apparatsiz testlar (ESP-IDF kerak emas)
+make -C firmware/host test
+cd server && go test ./... && cd ..
+
+# 2) Go bridge (qurilmasiz ham ishga tushadi, /health tekshirish uchun)
+cd server && go run ./cmd/flite-bridge --device http://192.168.4.1 --listen :8080
+
+# 3) ESP32 firmware (ESP-IDF >= 5.2 kerak)
+cd firmware
+idf.py set-target esp32s3     # yoki esp32c3
+idf.py menuconfig             # FlipperLite hardware bo'limida pinlar
+idf.py build flash monitor
+
+# 4) Android ilova (Android SDK + JDK 17 kerak)
+cd android
+./gradlew :app:assembleDebug
 ```
 
-`recon.py` avval interfeys/manzilni tekshiradi, keyin bosh sahifa + barcha JS/CSS
-fayllarini `captures/mf680/` ga saqlaydi va `analysis.json` yaratadi
-(`goform`, `sms`, `read_sms`, `display:none`, USSD va h.k. bo'yicha).
-`sms_client.py` hech qanday endpointni taxmin qilmaydi — faqat recon topgan
-URL bilan ishlaydi.
+Telefon ilovasida **Bridge URL** ni kompyuteringizning LAN manziliga o'zingiz o'zgartiring
+(masalan `http://192.168.1.20:8080`). Emulator uchun `http://10.0.2.2:8080` mos keladi.
+Batafsil: [docs/BUILD.md](docs/BUILD.md).
 
-**Eslatma:** 2026-11-23 holatida ish muhitida qurilma ko'rinmadi
-(USB tarmoq interfeysi yo'q, `192.168.100.1` timeout). Shu sabab endpointlar
-tasdiqlanmagan — ularni qurilma ulangandan keyingina recon aniqlaydi.
+## Maqsad va keyingi qadam
 
-## Haqiqiy hardware ga o'tish
+Hozirgi bosqich: **firmware + Go bridge + Android boshqaruv paneli** tayyor.
+Keyingi bosqich rejalari:
 
-Mantig o'zgarishsiz qoladi, faqat ikki qism almashtiriladi:
+- `/api/display` (1-bit framebuffer) asosida telefonda displey ko'rinishini chizish;
+- BLE orqali qurilma topish va sozlash (Wi-Fi parolni yuborish o'rniga);
+- sozlamalarni NVS da saqlash, OTA yangilash;
+- ESP32-C3 uchun xotira profilini alohida optimallashtirish.
 
-- `SimulatedRouter` → ESP32 da `esp_wps` (PBC rejimi) bilan haqiqiy router
-  tomonidan berilgan ma'lumot;
-- `EinkDisplay` → SSD1306 (OLED) yoki GxEPD2 (e-ink) kutubxonasi;
-- `tick()` → `loop()` ichida chaqiriladi; tugmalar `press_wps()` /
-  `press_reset()` ga bog'lanadi.
+Eski Python simulyatori va MF680 vositalari o'chirildi, lekin birinchi commit
+(`c27ee32`) da to'liq saqlanib qolgan — kerak bo'lsa `git show c27ee32` bilan qaytarish mumkin.
 
-Buning uchun faqat o'zingiz boshqaradigan router va uning WPS tugmasidan
-foydalaning.
+## Litsenziya
+
+Ushbu loyiha kodi **MIT** ([LICENSE](LICENSE)). Flipper Zero firmwareining o'zi **GPL-3.0**;
+biz uning kodini ko'chirmadik, faqat arxitektura g'oyalarini o'rgandik.
+Batafsil: [NOTICE.md](NOTICE.md) va [docs/PORTING.md](docs/PORTING.md).

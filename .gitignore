@@ -1,0 +1,25 @@
+# ESP-IDF
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/managed_components/
+firmware/dependencies.lock
+
+# Host tests
+firmware/host/host_tests
+
+# Go
+server/flite-bridge
+server/coverage.out
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.iml
+.gradle/
+
+# OS
+.DS_Store

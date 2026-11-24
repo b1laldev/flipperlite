@@ -43,6 +43,10 @@ class BridgeClient(url: String, token: String = "") {
         DisplayFrame.fromJson(get("/api/v1/display"))
     }
 
+    suspend fun connectWiFi(ssid: String, password: String) = withContext(Dispatchers.IO) {
+        post("/api/v1/wifi", JSONObject().put("ssid", ssid).put("password", password))
+    }
+
     suspend fun input(key: String, action: String) = withContext(Dispatchers.IO) {
         post("/api/v1/input", JSONObject().put("key", key).put("action", action))
     }

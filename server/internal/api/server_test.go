@@ -107,9 +107,10 @@ func TestAuthAndWeb(t *testing.T) {
 		t.Fatalf("health must stay public: %d", status)
 	}
 	for path, needle := range map[string]string{
-		"/":           "FlipperLite",
-		"/app.js":     "apiJSON",
-		"/styles.css": "--accent",
+		"/":                     "FlipperLite",
+		"/app.js":               "apiJSON",
+		"/styles.css":           "--accent",
+		"/manifest.webmanifest": "FlipperLite",
 	} {
 		status, body := request(t, client, srv.URL, "GET", path, "")
 		if status != 200 || !strings.Contains(body, needle) {

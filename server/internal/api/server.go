@@ -56,7 +56,7 @@ func New(dev device.API, opts ...Option) *Server {
 
 func publicPath(path string) bool {
 	switch path {
-	case "/", "/health", "/app.js", "/styles.css", "/favicon.svg":
+	case "/", "/health", "/app.js", "/styles.css", "/favicon.svg", "/manifest.webmanifest":
 		return true
 	}
 	return false

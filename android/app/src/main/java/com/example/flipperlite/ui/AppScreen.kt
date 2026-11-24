@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -81,6 +82,9 @@ fun DisplayPreview(frame: DisplayFrame?) {
 fun AppScreen() {
     var url by rememberSaveable { mutableStateOf("http://10.0.2.2:8080") }
     var token by rememberSaveable { mutableStateOf("") }
+    var wifiSsid by rememberSaveable { mutableStateOf("") }
+    var wifiPassword by rememberSaveable { mutableStateOf("") }
+    var wifiResult by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<DeviceStatus?>(null) }
     var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
     var frame by remember { mutableStateOf<DisplayFrame?>(null) }
@@ -142,6 +146,37 @@ fun AppScreen() {
             )
             if (error != null) {
                 Text("Bridge offline: $error", color = MaterialTheme.colorScheme.error)
+            }
+
+            Text("WiFi sozlash (faqat o'z tarmog'ingiz)", style = MaterialTheme.typography.titleMedium)
+            OutlinedTextField(
+                value = wifiSsid,
+                onValueChange = { wifiSsid = it },
+                label = { Text("SSID") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = wifiPassword,
+                onValueChange = { wifiPassword = it },
+                label = { Text("Parol") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Button(onClick = {
+                    scope.launch {
+                        wifiResult = try {
+                            client.connectWiFi(wifiSsid, wifiPassword)
+                            wifiPassword = ""
+                            "So'rov yuborildi"
+                        } catch (e: Exception) { e.message ?: "xato" }
+                    }
+                }) { Text("Ulanish") }
+                if (wifiResult.isNotEmpty()) {
+                    Text(wifiResult, color = MaterialTheme.colorScheme.secondary)
+                }
             }
 
             status?.let { current ->

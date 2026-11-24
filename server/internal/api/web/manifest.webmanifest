@@ -1,0 +1,12 @@
+{
+  "name": "FlipperLite boshqaruv paneli",
+  "short_name": "FlipperLite",
+  "description": "ESP32 qurilmani boshqarish: holat, ilovalar, D-pad, displey va voqealar.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

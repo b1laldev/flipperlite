@@ -33,4 +33,5 @@ func (s *Server) registerWeb() {
 	s.mux.Handle("GET /app.js", fileServer)
 	s.mux.Handle("GET /styles.css", fileServer)
 	s.mux.Handle("GET /favicon.svg", fileServer)
+	s.mux.Handle("GET /manifest.webmanifest", fileServer)
 }

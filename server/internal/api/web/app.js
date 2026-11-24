@@ -2,12 +2,14 @@
   'use strict';
 
   const state = {
+    base: localStorage.getItem('flite.base') || '',
     token: localStorage.getItem('flite.token') || '',
     connected: false,
   };
 
   const $ = (selector) => document.querySelector(selector);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const url = (path) => `${state.base.replace(/\/$/, '')}${path}`;
 
   function headers(extra = {}) {
     const result = { 'Content-Type': 'application/json', ...extra };
@@ -16,7 +18,7 @@
   }
 
   async function apiJSON(path, options = {}) {
-    const response = await fetch(path, { ...options, headers: headers(options.headers) });
+    const response = await fetch(url(path), { ...options, headers: headers(options.headers) });
     if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
     return response.json();
   }
@@ -124,7 +126,7 @@
   async function streamEvents() {
     while (true) {
       try {
-        const response = await fetch('/api/v1/events', { headers: headers() });
+        const response = await fetch(url('/api/v1/events'), { headers: headers() });
         if (!response.ok) throw new Error(`events: HTTP ${response.status}`);
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -146,13 +148,29 @@
     }
   }
 
-  $('#save-token').addEventListener('click', () => {
+  $('#save-settings').addEventListener('click', () => {
+    state.base = $('#base-url').value.trim();
     state.token = $('#token').value.trim();
-    if (state.token) localStorage.setItem('flite.token', state.token);
-    else localStorage.removeItem('flite.token');
-    addEvent({ saved: state.token ? 'API token (local only)' : 'token cleared' });
+    for (const [key, value] of [['flite.base', state.base], ['flite.token', state.token]]) {
+      if (value) localStorage.setItem(key, value);
+      else localStorage.removeItem(key);
+    }
+    addEvent({ saved: 'bridge URL / token (local only)' });
     refresh();
   });
+  $('#wifi-connect').addEventListener('click', async () => {
+    const result = $('#wifi-result');
+    result.textContent = 'Yuborilmoqda…';
+    try {
+      await apiJSON('/api/v1/wifi', {
+        method: 'POST',
+        body: JSON.stringify({ ssid: $('#wifi-ssid').value, password: $('#wifi-pass').value }),
+      });
+      result.textContent = 'So'rov yuborildi';
+      $('#wifi-pass').value = '';
+    } catch (error) { result.textContent = error.message; }
+  });
+  $('#base-url').value = state.base;
   $('#token').value = state.token;
   document.querySelectorAll('[data-key]').forEach((button) => {
     button.addEventListener('click', () => sendInput(button.dataset.key, button.dataset.action || 'short'));

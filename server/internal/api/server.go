@@ -1,24 +1,47 @@
-// Package api exposes the phone-facing REST/SSE bridge.
+// Package api exposes the phone-facing REST/SSE bridge and the web dashboard.
 package api
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/bilolhonahmadjanov/flipperlite/server/internal/device"
 )
 
 type Server struct {
-	device device.API
-	mux    *http.ServeMux
+	device     device.API
+	mux        *http.ServeMux
+	token      string
+	corsOrigin string
 }
 
-func New(dev device.API) *Server {
-	s := &Server{device: dev, mux: http.NewServeMux()}
+type Option func(*Server)
+
+// WithToken enables bearer-token authentication for /api/v1/* endpoints.
+func WithToken(token string) Option {
+	return func(s *Server) { s.token = token }
+}
+
+// WithCORSOrigin restricts browser clients to a specific origin (default "*").
+func WithCORSOrigin(origin string) Option {
+	return func(s *Server) {
+		if origin != "" {
+			s.corsOrigin = origin
+		}
+	}
+}
+
+func New(dev device.API, opts ...Option) *Server {
+	s := &Server{device: dev, mux: http.NewServeMux(), corsOrigin: "*"}
+	for _, opt := range opts {
+		opt(s)
+	}
 	s.mux.HandleFunc("GET /health", s.health)
 	s.mux.HandleFunc("GET /api/v1/status", s.status)
 	s.mux.HandleFunc("GET /api/v1/apps", s.apps)
@@ -27,16 +50,42 @@ func New(dev device.API) *Server {
 	s.mux.HandleFunc("POST /api/v1/launch", s.launch)
 	s.mux.HandleFunc("POST /api/v1/wifi", s.wifi)
 	s.mux.HandleFunc("GET /api/v1/events", s.events)
+	s.registerWeb()
 	return s
+}
+
+func publicPath(path string) bool {
+	switch path {
+	case "/", "/health", "/app.js", "/styles.css", "/favicon.svg":
+		return true
+	}
+	return false
+}
+
+func authorized(header, token string) bool {
+	if token == "" {
+		return true
+	}
+	value := strings.TrimSpace(header)
+	if !strings.HasPrefix(value, "Bearer ") {
+		return false
+	}
+	provided := strings.TrimSpace(strings.TrimPrefix(value, "Bearer "))
+	return subtle.ConstantTimeCompare([]byte(provided), []byte(token)) == 1
 }
 
 func (s *Server) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", s.corsOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Add("Vary", "Origin")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		if !publicPath(r.URL.Path) && !authorized(r.Header.Get("Authorization"), s.token) {
+			fail(w, http.StatusUnauthorized, "bearer token required")
 			return
 		}
 		s.mux.ServeHTTP(w, r)
@@ -62,7 +111,9 @@ func decode(w http.ResponseWriter, r *http.Request, out any) bool {
 }
 
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "service": "flite-bridge"})
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status": "ok", "service": "flite-bridge", "auth": fmt.Sprintf("%t", s.token != ""),
+	})
 }
 
 func (s *Server) status(w http.ResponseWriter, r *http.Request) {

@@ -12,24 +12,28 @@ import (
 	"time"
 
 	"github.com/bilolhonahmadjanov/flipperlite/server/internal/api"
+	"github.com/bilolhonahmadjanov/flipperlite/server/internal/config"
 	"github.com/bilolhonahmadjanov/flipperlite/server/internal/device"
 )
 
-func env(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
-}
-
 func main() {
-	deviceURL := flag.String("device", env("FLITE_DEVICE_URL", "http://192.168.4.1"),
-		"ESP32 device base URL")
-	listen := flag.String("listen", env("FLITE_LISTEN_ADDR", ":8080"),
-		"bridge listen address")
+	if err := config.LoadDotEnv(".env"); err != nil {
+		log.Printf("warning: could not read .env: %v", err)
+	}
+	settings, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	deviceURL := flag.String("device", settings.DeviceURL, "ESP32 device base URL")
+	listen := flag.String("listen", settings.ListenAddr, "bridge listen address")
 	flag.Parse()
 
-	bridge := api.New(device.New(*deviceURL))
+	dev := device.New(*deviceURL)
+	bridge := api.New(dev,
+		api.WithToken(settings.APIToken),
+		api.WithCORSOrigin(settings.CORSOrigin),
+	)
 	server := &http.Server{
 		Addr:              *listen,
 		Handler:           bridge.Handler(),
@@ -47,7 +51,10 @@ func main() {
 		}
 	}()
 
-	log.Printf("FlipperLite bridge: %s -> %s", *listen, *deviceURL)
+	// Only the device host is logged; tokens/passwords never are.
+	parsed := config.Config{DeviceURL: *deviceURL}
+	log.Printf("FlipperLite bridge: %s -> %s (auth=%t, dashboard at /)",
+		*listen, parsed.SafeHost(), settings.TokenEnabled())
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}

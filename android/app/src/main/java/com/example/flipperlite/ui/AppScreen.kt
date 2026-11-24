@@ -2,6 +2,9 @@ package com.example.flipperlite.ui
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Base64
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,22 +34,59 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.flipperlite.data.AppInfo
 import com.example.flipperlite.data.BridgeClient
 import com.example.flipperlite.data.DeviceStatus
+import com.example.flipperlite.data.DisplayFrame
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+@Composable
+fun DisplayPreview(frame: DisplayFrame?) {
+    val width = frame?.width?.takeIf { it > 0 } ?: 128
+    val height = frame?.height?.takeIf { it > 0 } ?: 64
+    val pixels = remember(frame) {
+        if (frame?.data.isNullOrEmpty()) ByteArray(width * height / 8)
+        else Base64.decode(frame.data, Base64.DEFAULT)
+    }
+    Canvas(
+        Modifier
+            .fillMaxWidth()
+            .height(140.dp)
+            .background(Color(0xFF05080F)),
+    ) {
+        val scale = minOf(size.width / width, size.height / height)
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val index = (y / 8) * width + x
+                if (index < pixels.size && (pixels[index].toInt() and (1 shl (y % 8))) != 0) {
+                    drawRect(
+                        color = Color(0xFF4ADE80),
+                        topLeft = Offset(x * scale, y * scale),
+                        size = Size(scale + 0.5f, scale + 0.5f),
+                    )
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScreen() {
     var url by rememberSaveable { mutableStateOf("http://10.0.2.2:8080") }
+    var token by rememberSaveable { mutableStateOf("") }
     var status by remember { mutableStateOf<DeviceStatus?>(null) }
     var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
+    var frame by remember { mutableStateOf<DisplayFrame?>(null) }
     var events by remember { mutableStateOf<List<String>>(emptyList()) }
     var error by remember { mutableStateOf<String?>(null) }
-    val client = remember(url) { BridgeClient(url) }
+    val client = remember(url, token) { BridgeClient(url, token) }
     val scope = rememberCoroutineScope()
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
 
@@ -59,6 +99,7 @@ fun AppScreen() {
             try {
                 status = client.status()
                 apps = client.apps()
+                frame = client.display()
                 error = null
             } catch (e: Exception) {
                 error = e.message ?: "bridge unreachable"
@@ -91,6 +132,14 @@ fun AppScreen() {
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
+            OutlinedTextField(
+                value = token,
+                onValueChange = { token = it },
+                label = { Text("API token (optional)") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+            )
             if (error != null) {
                 Text("Bridge offline: $error", color = MaterialTheme.colorScheme.error)
             }
@@ -120,6 +169,9 @@ fun AppScreen() {
                     ) { Text(app.name) }
                 }
             }
+
+            Text("Displey", style = MaterialTheme.typography.titleMedium)
+            DisplayPreview(frame)
 
             Text("D-pad", style = MaterialTheme.typography.titleMedium)
             fun send(key: String, action: String = "short") {

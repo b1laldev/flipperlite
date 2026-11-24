@@ -13,6 +13,12 @@ firmware/host/*.dSYM/
 server/flite-bridge
 server/coverage.out
 
+# Secrets: real env files are never committed
+.env
+.env.*
+!.env.example
+*.local
+
 # Android / Gradle
 android/.gradle/
 android/build/

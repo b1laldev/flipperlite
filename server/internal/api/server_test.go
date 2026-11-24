@@ -73,6 +73,51 @@ func request(t *testing.T, client *http.Client, base, method, path, body string)
 	return resp.StatusCode, string(data)
 }
 
+func requestWithToken(t *testing.T, client *http.Client, base, method, path, token string) int {
+	t.Helper()
+	req, err := http.NewRequest(method, base+path, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+	return resp.StatusCode
+}
+
+func TestAuthAndWeb(t *testing.T) {
+	const token = "supersecrettoken123"
+	srv := httptest.NewServer(New(&fakeDevice{}, WithToken(token)).Handler())
+	defer srv.Close()
+	client := srv.Client()
+
+	if status := requestWithToken(t, client, srv.URL, "GET", "/api/v1/status", ""); status != 401 {
+		t.Fatalf("unauthenticated request: %d", status)
+	}
+	if status := requestWithToken(t, client, srv.URL, "GET", "/api/v1/status", token); status != 200 {
+		t.Fatalf("authenticated request: %d", status)
+	}
+	if status := requestWithToken(t, client, srv.URL, "GET", "/health", ""); status != 200 {
+		t.Fatalf("health must stay public: %d", status)
+	}
+	for path, needle := range map[string]string{
+		"/":           "FlipperLite",
+		"/app.js":     "apiJSON",
+		"/styles.css": "--accent",
+	} {
+		status, body := request(t, client, srv.URL, "GET", path, "")
+		if status != 200 || !strings.Contains(body, needle) {
+			t.Fatalf("%s: %d, missing %q", path, status, needle)
+		}
+	}
+}
+
 func TestBridge(t *testing.T) {
 	fake := &fakeDevice{}
 	srv := httptest.NewServer(New(fake).Handler())

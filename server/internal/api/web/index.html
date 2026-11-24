@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlipperLite — boshqaruv paneli</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <h1>FlipperLite</h1>
+        <p>ESP32 qurilma boshqaruv paneli</p>
+      </div>
+    </div>
+    <div id="connection" class="badge bad">Offline</div>
+  </header>
+
+  <main class="grid">
+    <section class="panel span-2" id="auth-panel">
+      <h2>Ulanish</h2>
+      <div class="row">
+        <input id="token" type="password" placeholder="API token (ixtiyoriy)" autocomplete="off">
+        <button id="save-token" type="button">Saqlash</button>
+        <span class="hint">Token faqat shu brauzerda saqlanadi. Faylga yozilmaydi.</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Qurilma holati</h2>
+      <dl id="status" class="status">
+        <div><dt>Nomi</dt><dd>—</dd></div>
+        <div><dt>App</dt><dd>—</dd></div>
+        <div><dt>WiFi</dt><dd>—</dd></div>
+        <div><dt>IP</dt><dd>—</dd></div>
+        <div><dt>Uptime</dt><dd>—</dd></div>
+        <div><dt>Heap</dt><dd>—</dd></div>
+      </dl>
+      <p id="error" class="error" hidden></p>
+    </section>
+
+    <section class="panel">
+      <h2>Ilovalar</h2>
+      <div id="apps" class="apps"><span class="hint">Yuklanmoqda…</span></div>
+    </section>
+
+    <section class="panel">
+      <h2>D-pad</h2>
+      <div class="dpad">
+        <button data-key="up" class="wide">▲ UP</button>
+        <div class="dpad-row">
+          <button data-key="left">◀ L</button>
+          <button data-key="ok" class="accent">OK</button>
+          <button data-key="right">R ▶</button>
+        </div>
+        <button data-key="down" class="wide">▼ DOWN</button>
+        <div class="dpad-row">
+          <button data-key="back">BACK</button>
+          <button data-key="ok" data-action="long" class="accent">OK LONG</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Displey</h2>
+      <div class="screen-wrap">
+        <canvas id="screen" width="256" height="128" aria-label="Device display preview"></canvas>
+      </div>
+      <p class="hint">128×64, 1-bit. Go bridge orqali olinadi.</p>
+    </section>
+
+    <section class="panel span-2">
+      <h2>Voqealar oqimi <span class="hint">(SSE)</span></h2>
+      <div id="events" class="events" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

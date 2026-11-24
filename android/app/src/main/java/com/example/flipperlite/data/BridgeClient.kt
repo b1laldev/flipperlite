@@ -16,8 +16,9 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /** HTTP client for the Go bridge. All calls are suspend functions except the SSE stream. */
-class BridgeClient(url: String) {
+class BridgeClient(url: String, token: String = "") {
     private val baseUrl = normalize(url)
+    private val token = token.trim()
     private val http = OkHttpClient.Builder()
         .connectTimeout(3, TimeUnit.SECONDS)
         .readTimeout(5, TimeUnit.SECONDS)
@@ -38,6 +39,10 @@ class BridgeClient(url: String) {
         }
     }
 
+    suspend fun display(): DisplayFrame = withContext(Dispatchers.IO) {
+        DisplayFrame.fromJson(get("/api/v1/display"))
+    }
+
     suspend fun input(key: String, action: String) = withContext(Dispatchers.IO) {
         post("/api/v1/input", JSONObject().put("key", key).put("action", action))
     }
@@ -48,7 +53,7 @@ class BridgeClient(url: String) {
 
     /** Opens an SSE stream; every `data:` payload is delivered to [onLine]. */
     fun streamEvents(onLine: (String) -> Unit): Call {
-        val call = streamClient.newCall(Request.Builder().url(baseUrl + "/api/v1/events").build())
+        val call = streamClient.newCall(Request.Builder().url(baseUrl + "/api/v1/events").auth().build())
         call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 onLine("stream error: ${e.message}")
@@ -77,8 +82,13 @@ class BridgeClient(url: String) {
         return call
     }
 
+    private fun Request.Builder.auth(): Request.Builder {
+        if (token.isNotEmpty()) header("Authorization", "Bearer $token")
+        return this
+    }
+
     private fun get(path: String): String {
-        http.newCall(Request.Builder().url(baseUrl + path).build()).execute().use { response ->
+        http.newCall(Request.Builder().url(baseUrl + path).auth().build()).execute().use { response ->
             if (!response.isSuccessful) throw IOException("HTTP ${response.code} on $path")
             return response.body?.string() ?: throw IOException("empty response")
         }
@@ -86,7 +96,7 @@ class BridgeClient(url: String) {
 
     private fun post(path: String, payload: JSONObject) {
         val body = payload.toString().toRequestBody("application/json".toMediaType())
-        http.newCall(Request.Builder().url(baseUrl + path).post(body).build()).execute().use { response ->
+        http.newCall(Request.Builder().url(baseUrl + path).auth().post(body).build()).execute().use { response ->
             if (!response.isSuccessful) throw IOException("HTTP ${response.code} on $path")
         }
     }

@@ -62,6 +62,19 @@ go run ./cmd/flite-bridge --device http://192.168.4.1 --listen :8080
 
 `curl http://localhost:8080/health` → `{"status":"ok",...}`.
 
+Veb-dashboard: `http://localhost:8080/` — qurilma holati, app tugmalari, D-pad, displey
+preview va SSE voqealari. Sozlamalar `.env` dan o'qiladi (`server/.env.example` ni nusxalang):
+
+```bash
+cd server
+cp .env.example .env
+# FLITE_API_TOKEN ni o'zgartiring: openssl rand -hex 32
+go run ./cmd/flite-bridge
+```
+
+Real muhit o'zgaruvchilari `.env` ustidan ustun turadi. Token qo'yilsa veb-panel va Android
+ilovasida maxsus maydonga kiritiladi. Batafsil: [SECRETS.md](SECRETS.md).
+
 **Apparatsiz to'liq sinov:** avval `go run ./cmd/fake-device --listen :9090` ni ishga tushiring,
 keyin bridge'ni `--device http://localhost:9090` bilan oching. Soxta qurilma xuddi ESP32 kabi
 `/api/status`, `/api/apps`, `/api/display`, `/api/input`, `/api/events` javob beradi; Android

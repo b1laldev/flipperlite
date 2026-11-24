@@ -30,3 +30,16 @@ data class DeviceStatus(
 }
 
 data class AppInfo(val id: String, val name: String)
+
+data class DisplayFrame(val width: Int, val height: Int, val data: String) {
+    companion object {
+        fun fromJson(json: String): DisplayFrame {
+            val jsonObject = JSONObject(json)
+            return DisplayFrame(
+                width = jsonObject.optInt("width", 128),
+                height = jsonObject.optInt("height", 64),
+                data = jsonObject.optString("data", ""),
+            )
+        }
+    }
+}

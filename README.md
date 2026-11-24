@@ -17,9 +17,10 @@ qismlar (holat mashinasi, scene/view tizimi, input, kichik displey, app ro'yxati
 | `firmware/main/hw/` | SSD1306 (I2C) displey va 6 tugma (short/long/repeat) |
 | `firmware/main/net/` | SoftAP/STA WiFi, REST + SSE API (port 80) |
 | `firmware/host/` | Apparatsiz C testlari (`make -C firmware/host test`) |
-| `server/` | Go bridge: qurilma API'sini telefon uchun REST/SSE ga aylantiradi |
-| `android/` | Kotlin + Compose ilova: status, app ishga tushirish, D-pad, voqealar oqimi |
-| `docs/` | Arxitektura, protokol, yig'ish va Flipper'dan port qilish xaritasi |
+| `server/` | Go bridge: REST/SSE + veb-dashboard, boshqa ilovalar uchun ochiq API |
+| `server/internal/api/web/` | Veb boshqaruv paneli (HTML/CSS/JS, Go `embed` ichida) |
+| `android/` | Kotlin + Compose ilova: status, displey, app ishga tushirish, D-pad, voqealar |
+| `docs/` | Arxitektura, protokol, tashqi API, sirlar, yig'ish, port xaritasi |
 
 ## Tez boshlash
 
@@ -30,8 +31,10 @@ cd server && go test ./... && cd ..
 
 # 2) Go bridge (qurilmasiz sinash uchun soxta qurilma + bridge)
 cd server
+cp .env.example .env                          # kerak bo'lsa token/CORS ni shu yerga yozing
 go run ./cmd/fake-device --listen :9090 &     # apparatsiz demo
 go run ./cmd/flite-bridge --device http://localhost:9090 --listen :8080
+# veb-panel: http://localhost:8080/  (Android ilovasi ham shu API ga ulanadi)
 
 # 3) ESP32 firmware (ESP-IDF >= 5.2 kerak)
 cd firmware
@@ -44,9 +47,15 @@ cd android
 ./gradlew :app:assembleDebug
 ```
 
+Veb-panel `http://<bridge-host>:8080/` manzilida ishlaydi: qurilma holati, app tugmalari,
+D-pad, displey preview va SSE voqealari. Telefon/veb/boshqa ilova **bir xil REST API** dan
+foydalanadi — [docs/EXTERNAL_API.md](docs/EXTERNAL_API.md).
+
 Telefon ilovasida **Bridge URL** ni kompyuteringizning LAN manziliga o'zingiz o'zgartiring
 (masalan `http://192.168.1.20:8080`). Emulator uchun `http://10.0.2.2:8080` mos keladi.
-Batafsil: [docs/BUILD.md](docs/BUILD.md).
+Agar `FLITE_API_TOKEN` qo'yilgan bo'lsa, tokenni veb-panel yoki Android ilovasidagi
+maxsus maydonga kiriting. Sirlar va token xavfsizligi: [docs/SECRETS.md](docs/SECRETS.md).
+Batafsil yig'ish: [docs/BUILD.md](docs/BUILD.md).
 
 ## Maqsad va keyingi qadam
 

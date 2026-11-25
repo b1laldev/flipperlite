@@ -141,7 +141,13 @@ static esp_err_t wifi_post(httpd_req_t* req) {
 
 static esp_err_t events_get(httpd_req_t* req) {
     QueueHandle_t subscriber = flite_event_bus_subscribe();
-    if(subscriber == NULL) return httpd_resp_send_err(req, HTTPD_503_SERVICE_UNAVAILABLE, "busy");
+    if(subscriber == NULL) {
+#ifdef HTTPD_503_SERVICE_UNAVAILABLE
+        return httpd_resp_send_err(req, HTTPD_503_SERVICE_UNAVAILABLE, "busy");
+#else
+        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "busy");
+#endif
+    }
 
     set_cors(req);
     httpd_resp_set_type(req, "text/event-stream");

@@ -52,8 +52,9 @@ fun DisplayPreview(frame: DisplayFrame?) {
     val width = frame?.width?.takeIf { it > 0 } ?: 128
     val height = frame?.height?.takeIf { it > 0 } ?: 64
     val pixels = remember(frame) {
-        if (frame?.data.isNullOrEmpty()) ByteArray(width * height / 8)
-        else Base64.decode(frame.data, Base64.DEFAULT)
+        val data = frame?.data
+        if (data.isNullOrEmpty()) ByteArray(width * height / 8)
+        else Base64.decode(data, Base64.DEFAULT)
     }
     Canvas(
         Modifier

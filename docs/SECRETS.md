@@ -8,7 +8,8 @@ kerak.
 1. Haqiqiy sozlamalar faqat `.env` faylida yoki muhit o'zgaruvchilarida bo'ladi.
    `.env` va `.env.*` gitignore qilingan; faqat `.env.example` (placeholder'lar) repo ichida.
 2. `.env` dagi qiymatlar real environment o'zgaruvchilari bilan **ustun qo'yilmaydi** —
-   environment har doim ustun turadi (CI/server uchun qulay).
+   environment har doim ustun turadi (CI/server uchun qulay). `scripts/provision.sh` ham
+   `server/.env` ni shu tartibda o'qiydi (`FLITE_ENV_FILE` bilan boshqa faylni berish mumkin).
 3. `FLITE_API_TOKEN` ixtiyoriy. Qo'yilsa, barcha `/api/v1/*` endpointlari
    `Authorization: Bearer <token>` talab qiladi. `/health` va veb-assets ochiq qoladi.
 4. Token kamida 16 belgi bo'lishi shart. Yaratish:

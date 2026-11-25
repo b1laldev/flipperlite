@@ -23,6 +23,7 @@ qismlar (holat mashinasi, scene/view tizimi, input, kichik displey, app ro'yxati
 | `server/internal/api/web/` | Veb boshqaruv paneli (HTML/CSS/JS, Go `embed` ichida) |
 | `android/` | Kotlin + Compose ilova: status, displey, app ishga tushirish, D-pad, voqealar |
 | `docs/` | Arxitektura, protokol, tashqi API, sirlar, yig'ish, port xaritasi |
+| `scripts/` | `flash.sh`, `provision.sh`, `build-android.sh`, `doctor.sh` — apparat kelganda tayyor ishga tushirish |
 | `hardware/PROFILE.md` | Prosessor/WiFi/boot/displey pinlari — kelguchi ma'lumotlar uchun shablon |
 
 ## Tez boshlash
@@ -39,16 +40,16 @@ go run ./cmd/fake-device --listen :9090 &     # apparatsiz demo
 go run ./cmd/flite-bridge --device http://localhost:9090 --listen :8080
 # veb-panel: http://localhost:8080/  (Android ilovasi ham shu API ga ulanadi)
 
-# 3) ESP32 firmware (ESP-IDF >= 5.2 kerak)
-cd firmware
-idf.py set-target esp32s3     # yoki esp32c3
-idf.py menuconfig             # FlipperLite hardware bo'limida pinlar
-idf.py build flash monitor
+# 3) ESP32 firmware + provisioning (ESP-IDF >= 5.2 kerak)
+./scripts/flash.sh esp32s3 --monitor    # yoki: esp32c3 --port /dev/cu.usbmodemXXXX
+./scripts/provision.sh                  # server/.env dagi WiFi ma'lumotlari bilan
 
 # 4) Android ilova (Android SDK + JDK 17 kerak)
-cd android
-./gradlew :app:assembleDebug
+./scripts/build-android.sh --install    # yoki --release / --clean
 ```
+
+`./scripts/doctor.sh` mahalliy tool'larning tayyorligini ko'rsatadi. GitHub Actions har pushda
+ikki target uchun firmware bin fayllarini va debug APK'ni artifact qilib yig'adi.
 
 Veb-panel `http://<bridge-host>:8080/` manzilida ishlaydi: qurilma holati, app tugmalari,
 D-pad, displey preview va SSE voqealari. Telefon/veb/boshqa ilova **bir xil REST API** dan
@@ -65,7 +66,7 @@ Batafsil yig'ish: [docs/BUILD.md](docs/BUILD.md).
 Hozirgi bosqich: **firmware + Go bridge + Android boshqaruv paneli** tayyor.
 Keyingi bosqich rejalari:
 
-- `/api/display` (1-bit framebuffer) asosida telefonda displey ko'rinishini chizish;
+- haqiqiy displey/board kelgach `hardware/PROFILE.md` dagi pinlarni tasdiqlash;
 - BLE orqali qurilma topish va sozlash (Wi-Fi parolni yuborish o'rniga);
 - sozlamalarni NVS da saqlash, OTA yangilash;
 - ESP32-C3 uchun xotira profilini alohida optimallashtirish.

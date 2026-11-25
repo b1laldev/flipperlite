@@ -1,6 +1,5 @@
-# Default target: ESP32-S3. For ESP32-C3 run:
-#   idf.py set-target esp32c3
-CONFIG_IDF_TARGET="esp32s3"
+# Target is selected by scripts/flash.sh or CI via IDF_TARGET / idf.py set-target.
+# Do not pin CONFIG_IDF_TARGET here: it would override an esp32c3 build.
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 CONFIG_FREERTOS_HZ=1000
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192

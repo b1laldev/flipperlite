@@ -9,6 +9,21 @@
 | Android | Android Studio / JDK 17 / Android SDK 34, Gradle wrapper (jar repo ichida) |
 | Host testlari | clang yoki gcc, make |
 
+## Tezkor skriptlar
+
+```bash
+./scripts/doctor.sh                         # qaysi tool'lar tayyor ekanini ko'rsatadi
+./scripts/flash.sh esp32s3 --monitor        # yoki: esp32c3 --port /dev/cu.usbmodemXXXX
+cp server/.env.example server/.env          # WiFi/token; fayl gitignore qilingan
+./scripts/provision.sh                      # qurilmani kutadi, WiFi yuboradi, app ishga tushiradi
+./scripts/build-android.sh --install        # APK yig'adi va ulangan telefonga o'rnatadi
+```
+
+`provision.sh` `server/.env` ni o'qiydi, lekin real environment o'zgaruvchilari har doim
+ustun turadi. WiFi paroli hech qachon logga yoki jarayon argumentlariga chiqmaydi.
+CI har pushda `esp32s3` va `esp32c3` firmware'ini hamda debug APK'ni yig'ib, artifact
+sifatida saqlaydi.
+
 ## 1) Host testlari ( apparatsiz )
 
 ```bash
@@ -27,6 +42,12 @@ idf.py set-target esp32s3       # esp32c3 ham qo'llab-quvvatlanadi
 idf.py menuconfig               # "FlipperLite hardware" bo'limi
 idf.py build
 idf.py -p /dev/cu.usbmodemXXXX flash monitor
+```
+
+Yoki tayyor skript bilan (target va portni o'zi tanlaydi):
+
+```bash
+./scripts/flash.sh esp32s3 --monitor
 ```
 
 ### Pinlar (default = ESP32-S3 uchun misol)

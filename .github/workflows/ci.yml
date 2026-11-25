@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -16,3 +19,54 @@ jobs:
         run: make -C firmware/host test
       - name: Go vet and tests
         run: cd server && go vet ./... && go test ./...
+
+  firmware:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: esp32s3
+          - target: esp32c3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build firmware (${{ matrix.target }})
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          path: firmware
+          esp_idf_version: v5.2.2
+          target: ${{ matrix.target }}
+          command: "idf.py set-target ${{ matrix.target }} && idf.py build"
+      - name: Upload firmware artifacts (${{ matrix.target }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.target }}
+          path: |
+            firmware/build/*.bin
+            firmware/build/*.elf
+            firmware/build/*.map
+            firmware/sdkconfig
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK 34
+        run: |
+          yes | sdkmanager --licenses > /dev/null
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      - name: Build debug APK
+        run: ./scripts/build-android.sh
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: flipperlite-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
